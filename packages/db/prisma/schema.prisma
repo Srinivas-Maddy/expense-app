@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  currency  String   @default("INR")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  expenses          Expense[]
+  incomes           Income[]
+  categories        Category[]
+  refreshTokens     RefreshToken[]
+  budgets           Budget[]
+  recurringExpenses RecurringExpense[]
+  accounts          Account[]
+  notifications     Notification[]
+  tags              Tag[]
+
+  @@map("users")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(12, 2)
+  description String
+  currency    String   @default("INR")
+  date        DateTime @db.Date
+  userId      String   @map("user_id")
+  categoryId  String   @map("category_id")
+  accountId   String?  @map("account_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category  @relation(fields: [categoryId], references: [id])
+  account  Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  tags     Tag[]     @relation("ExpenseTags")
+
+  @@index([userId, date])
+  @@index([userId, description])
+  @@map("expenses")
+}
+
+model Income {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(12, 2)
+  description String
+  currency    String   @default("INR")
+  date        DateTime @db.Date
+  source      String
+  userId      String   @map("user_id")
+  accountId   String?  @map("account_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  tags    Tag[]    @relation("IncomeTags")
+
+  @@index([userId, date])
+  @@index([userId, description])
+  @@map("incomes")
+}
+
+model Category {
+  id        String  @id @default(uuid())
+  name      String
+  icon      String?
+  color     String?
+  userId    String? @map("user_id")
+  isDefault Boolean @default(false) @map("is_default")
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+  budgets  Budget[]
+
+  @@unique([name, userId])
+  @@map("categories")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// Phase 2: Budget
+model Budget {
+  id         String  @id @default(uuid())
+  userId     String  @map("user_id")
+  categoryId String? @map("category_id")
+  month      String  // YYYY-MM format
+  amount     Decimal @db.Decimal(12, 2)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, month])
+  @@index([userId, month])
+  @@map("budgets")
+}
+
+// Phase 3: Recurring Expenses
+model RecurringExpense {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(12, 2)
+  description String
+  categoryId  String   @map("category_id")
+  userId      String   @map("user_id")
+  accountId   String?  @map("account_id")
+  frequency   String   // daily, weekly, monthly, yearly
+  startDate   DateTime @db.Date @map("start_date")
+  endDate     DateTime? @db.Date @map("end_date")
+  nextRunDate DateTime @db.Date @map("next_run_date")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([nextRunDate, isActive])
+  @@map("recurring_expenses")
+}
+
+// Phase 3: Multi-Account Support
+model Account {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // cash, bank, wallet, credit_card
+  balance   Decimal  @default(0) @db.Decimal(12, 2)
+  currency  String   @default("INR")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+  incomes  Income[]
+
+  @@unique([name, userId])
+  @@map("accounts")
+}
+
+// Phase 3: Notifications & Reminders
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   // budget_alert, reminder, recurring_created, export_ready
+  title     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  String?  // JSON string for extra data
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// Tags for expenses and income
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[] @relation("ExpenseTags")
+  incomes  Income[]  @relation("IncomeTags")
+
+  @@unique([name, userId])
+  @@index([userId])
+  @@map("tags")
+}

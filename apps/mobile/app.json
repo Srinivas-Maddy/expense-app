@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Expense Manager",
+    "slug": "expense-manager",
+    "version": "1.0.0",
+    "scheme": "expense-manager",
+    "platforms": ["ios", "android"],
+    "newArchEnabled": true
+  }
+}

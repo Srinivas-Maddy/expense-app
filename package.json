@@ -1,0 +1,23 @@
+{
+  "name": "expense-app",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "db:migrate": "npm run migrate --workspace=@expense-app/db",
+    "db:seed": "npm run seed --workspace=@expense-app/db",
+    "db:generate": "npm run generate --workspace=@expense-app/db"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "npm@10.9.2"
+}
