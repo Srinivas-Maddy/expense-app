@@ -1,0 +1,31 @@
+npm install --legacy-peer-deps && npx prisma generate --schema=packages/db/prisma/schema.prisma && npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma && cd apps/api && npx tsc
+6s
+npm warn config production Use `--omit=dev` instead.
+up to date, audited 1212 packages in 3s
+5 vulnerabilities (1 moderate, 4 high)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+npm warn config production Use `--omit=dev` instead.
+Prisma schema loaded from packages/db/prisma/schema.prisma
+✔ Generated Prisma Client (v6.19.2) to ./node_modules/@prisma/client in 115ms
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+npm warn config production Use `--omit=dev` instead.
+Prisma schema loaded from packages/db/prisma/schema.prisma
+
+Error: Prisma schema validation - (get-config wasm)
+Error code: P1012
+
+error: Environment variable not found: DATABASE_URL.
+  -->  packages/db/prisma/schema.prisma:7
+   | 
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   | 
+Validation Error Count: 1
+[Context: getConfig]
+Prisma CLI Version : 6.19.2
+ERROR: failed to build: failed to solve: process "sh -c npm install --legacy-peer-deps && npx prisma generate --schema=packages/db/prisma/schema.prisma && npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma && cd apps/api && npx tsc" did not complete successfully: exit code: 1
